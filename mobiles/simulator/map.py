@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import numpy as np
 from .constants import FILE_LOC, CRS
+import sys
 
 
 class Map:
@@ -11,7 +12,8 @@ class Map:
         data = gpd.read_file(FILE_LOC).to_crs(epsg=CRS)
         # multi polygon, 27th is the outline.
         self.polys = data.loc[0].geometry[27]
-        print(self.polys)
+
+        # The set of recording points on the map
 
     def show(self):
         fig = plt.figure()
