@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import math
 import time
-from .constants import SIMU_TIMESCALE, UPDATE_PERIOD
+from .constants import SIMU_TIMESCALE, UPDATE_PERIOD, DEBUG
 
 
 class Agent:
@@ -16,7 +16,7 @@ class Agent:
         # trajectory: 24 hours a day for 14 days. None means not close to any pre-defined locations
         self.trajectory = np.full((15, 24), None)
         # The current time: which day, which hour
-        self.current_time = [0, 0]
+        self.current_time = 0
         self.min_speed = env.min_speed
         self.max_speed = env.max_speed
         self.record_range = env.record_range
@@ -25,17 +25,39 @@ class Agent:
         self.update()
         print(f'This is agent {self.identity}: \n {self.location}')
 
+        if DEBUG:
+            # ----plot the tracjectory
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            xs, ys = self.env.simu_map.polys.exterior.xy
+            ax.plot(xs, ys, linewidth=1)
+            # --- debug counter
+            debug_counter = 0
+
         while True:
-            # for _ in range(5):
+            # sleep for a simu time
             time.sleep(UPDATE_PERIOD / SIMU_TIMESCALE)
-            # update the current time
-            if self.current_time[1] == 23:
-                self.current_time[1] = 0
-                self.current_time[0] += 1
-            else:
-                self.current_time[1] += 1
+            # update the current time: day + 1
+            self.current_time += 1
             self.move()
             self.update()
+
+            if not DEBUG:
+                continue
+
+            # --- plot the trajectory
+            plt.plot(self.location.x, self.location.y, 'ro')
+            # --- debug counter
+            debug_counter += 1
+            if debug_counter > 24:
+                break
+        # --- plot the trajectory
+        # self.plot_station(plt)
+        for node in self.env.nodes:
+            print(node['point'])
+            plt.plot(node['point'].x, node['point'].y, 'b+')
+        ax.set_title('Singapore Map')
+        plt.show()
 
     def random_location(self):
         """ generate a point in Singapore boundary.
@@ -55,6 +77,7 @@ class Agent:
 
     def move(self):
         will_move = bool(random.randint(0, 1))
+        print(f'Agent {self.identity} will move: {will_move}')
         if will_move:
             radian = random.uniform(-1.58, 1.58)
             direction = (math.sin(radian), 1 - math.sin(radian)**2)
@@ -79,14 +102,22 @@ class Agent:
         if there are several nodes in the range, update the trajectory to be the nearest one 
         '''
         min_dist, node_idx = float('inf'), None
-        for idx, node in self.env.nodes:
+        # print(self.env.nodes)
+        for idx, node in enumerate(self.env.nodes):
             dist = node['point'].distance(self.location)
             if dist < self.env.record_range and dist < min_dist:
                 min_dist = dist
                 node_idx = idx
-        if idx:
-            self.trajectory[self.current_time[0] %
-                            15, self.current_time[1]] = node_idx
+        if node_idx:
+            day = self.current_time // 24 % 14
+            hour = self.current_time % 24
+            self.trajectory[day, hour] = node_idx
+        print(
+            f'Agent {self.identity} moved to node: {node_idx}, location: {self.location}')
+
+    def plot_station(self, plt):
+        for node in self.env.nodes:
+            plt.plot(node['point'].x, node['point'].y, 'b+')
 
     def show(self):
         """ Plot the agent in Singapore boundary.

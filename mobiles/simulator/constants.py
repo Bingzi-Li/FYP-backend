@@ -11,3 +11,6 @@ SIMU_TIMESCALE = 3600  # real time / simulation time
 
 # Node data
 NODE_DATA_LOC = './node_data/mrt_lrt_data.json'
+
+# code mode
+DEBUG = False

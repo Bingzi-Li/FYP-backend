@@ -12,7 +12,7 @@ class Env:
         '''
         self.min_speed = min_speed
         self.max_speed = max_speed
-        self.record_range = None
+        self.record_range = 2000
         self.simu_map = simu_map
         self.nodes = self.get_nodes()
 
@@ -20,12 +20,13 @@ class Env:
         nodes = []
         with open(NODE_DATA_LOC) as json_file:
             data = json.load(json_file)
-            in_proj = Proj(init='epsg:4326')
-            out_proj = Proj(init='epsg:' + str(SG_CRS))
+            in_proj = Proj('epsg:4326')
+            out_proj = Proj('epsg:' + str(SG_CRS))
             for each in data:
                 node = {}
                 node['name'] = each['station_name']
-                x, y = transform(in_proj, out_proj, each['lng'], each['lat'])
+                # the new transform seems to accept (lat, long) but our crs point is (long, lat)
+                y, x = transform(in_proj, out_proj,  each['lat'], each['lng'])
                 node['point'] = Point(x, y)
                 nodes.append(node)
         return nodes
