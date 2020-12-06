@@ -37,27 +37,29 @@ class Agent:
         while True:
             # sleep for a simu time
             time.sleep(UPDATE_PERIOD / SIMU_TIMESCALE)
-            # update the current time: day + 1
-            self.current_time += 1
             self.move()
             self.update()
-
-            if not DEBUG:
-                continue
-
-            # --- plot the trajectory
-            plt.plot(self.location.x, self.location.y, 'ro')
-            # --- debug counter
-            debug_counter += 1
-            if debug_counter > 24:
+            # update the current time: day + 1
+            self.current_time += 1
+            if self.current_time > self.env.simu_time:
                 break
-        # --- plot the trajectory
-        # self.plot_station(plt)
-        for node in self.env.nodes:
-            print(node['point'])
-            plt.plot(node['point'].x, node['point'].y, 'b+')
-        ax.set_title('Singapore Map')
-        plt.show()
+
+            if DEBUG:
+                # --- plot the trajectory
+                plt.plot(self.location.x, self.location.y, 'ro')
+                # --- debug counter
+                debug_counter += 1
+                if debug_counter > 24:
+                    break
+        if DEBUG:
+            # --- plot the trajectory
+            # self.plot_station(plt)
+            for node in self.env.nodes:
+                print(node['point'])
+                plt.plot(node['point'].x, node['point'].y, 'b+')
+            ax.set_title('Singapore Map')
+            plt.show()
+        print(self.trajectory)
 
     def random_location(self):
         """ generate a point in Singapore boundary.

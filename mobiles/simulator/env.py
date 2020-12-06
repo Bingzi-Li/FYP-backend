@@ -6,7 +6,7 @@ from shapely.geometry import Point, Polygon
 
 
 class Env:
-    def __init__(self, simu_map, min_speed=0, max_speed=14):
+    def __init__(self, simu_map, min_speed=0, max_speed=14, simu_time=14*24):
         '''
         speed: m/s
         '''
@@ -14,6 +14,7 @@ class Env:
         self.max_speed = max_speed
         self.record_range = 2000
         self.simu_map = simu_map
+        self.simu_time = simu_time  # unit: hour
         self.nodes = self.get_nodes()
 
     def get_nodes(self):
