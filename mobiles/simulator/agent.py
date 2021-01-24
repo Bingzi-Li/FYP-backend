@@ -1,4 +1,7 @@
 import random
+import sgt
+from sgt import SGT
+import requests
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
 from shapely.geometry import Point, Polygon
@@ -6,17 +9,17 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import math
 import time
-from .constants import SIMU_TIMESCALE, UPDATE_PERIOD, DEBUG
+from .constants import SIMU_TIMESCALE, UPDATE_PERIOD, DEBUG, SERVER_URL
 
 
 class Agent:
-    def __init__(self, env, identity):
+    def __init__(self, env, identity, current_time=0):
         self.identity = identity
         self.env = env
-        # trajectory: 24 hours a day for 14 days. None means not close to any pre-defined locations
-        self.trajectory = np.full((15, 24), None)
-        # The current time: which day, which hour
-        self.current_time = 0
+        # trajectory: 24 hours a day for 14 days. -1 means not close to any pre-defined locations
+        self.trajectory = np.full((14, 24), -1)
+        # The current time: which hour
+        self.current_time = current_time
         self.min_speed = env.min_speed
         self.max_speed = env.max_speed
         self.record_range = env.record_range
@@ -42,6 +45,7 @@ class Agent:
             # update the current time: day + 1
             self.current_time += 1
             if self.current_time > self.env.simu_time:
+                print(f'Agent {self.identity} time up! {self.current_time}')
                 break
 
             if DEBUG:
@@ -55,7 +59,6 @@ class Agent:
             # --- plot the trajectory
             # self.plot_station(plt)
             for node in self.env.nodes:
-                print(node['point'])
                 plt.plot(node['point'].x, node['point'].y, 'b+')
             ax.set_title('Singapore Map')
             plt.show()
@@ -103,19 +106,37 @@ class Agent:
         update the trajectory if the new location is within a certain distance (record_range) of a node.
         if there are several nodes in the range, update the trajectory to be the nearest one 
         '''
-        min_dist, node_idx = float('inf'), None
+        min_dist, node_idx = float('inf'), -1
         # print(self.env.nodes)
-        for idx, node in enumerate(self.env.nodes):
+        for node in self.env.nodes:
             dist = node['point'].distance(self.location)
             if dist < self.env.record_range and dist < min_dist:
                 min_dist = dist
-                node_idx = idx
+                node_idx = node['id']
+        day = self.current_time // 24 % 14
+        hour = self.current_time % 24
         if node_idx:
-            day = self.current_time // 24 % 14
-            hour = self.current_time % 24
             self.trajectory[day, hour] = node_idx
+        # embed and send the data once a day to server
+        if hour == 23:
+            self.embedding(day)
+
         print(
             f'Agent {self.identity} moved to node: {node_idx}, location: {self.location}')
+
+    def embedding(self, day):
+        '''
+        Do the embedding every day and send to the server
+        '''
+        data = self.trajectory[day, :]
+        alphabets = range(-1, len(self.env.nodes))
+        sgt = SGT(alphabets=alphabets, flatten=True)
+        vector = sgt.fit(data).to_json(orient='values')
+        # TODO: send to the server
+        data = {'day': day, 'embedding': vector}
+        r = requests.post(
+            f'{SERVER_URL}/embedding?id={self.identity}', json=data)
+        print(r.text)
 
     def plot_station(self, plt):
         for node in self.env.nodes:

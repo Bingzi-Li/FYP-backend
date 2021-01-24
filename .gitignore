@@ -2,3 +2,4 @@ mobiles/simulator/__pycache__/
 .DS_Store
 .vscode
 *__pycache__
+*.env

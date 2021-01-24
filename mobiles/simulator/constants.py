@@ -13,4 +13,6 @@ SIMU_TIMESCALE = 3600  # real time / simulation time
 NODE_DATA_LOC = './node_data/mrt_lrt_data.json'
 
 # code mode
-DEBUG = False
+DEBUG = True
+
+SERVER_URL = 'http://localhost:5000'

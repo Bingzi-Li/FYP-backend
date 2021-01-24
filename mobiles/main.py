@@ -7,7 +7,7 @@ import concurrent.futures
 class MobileSimulation:
     def __init__(self, n):
         self.simu_map = Map.Map()
-        self.env = Env.Env(self.simu_map, simu_time=24)
+        self.env = Env.Env(self.simu_map)
         if DEBUG:
             Agent.Agent(self.env, 0)
         else:
