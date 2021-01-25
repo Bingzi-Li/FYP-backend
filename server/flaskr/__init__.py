@@ -9,10 +9,9 @@ from flask_pymongo import PyMongo
 app = Flask(__name__, instance_relative_config=True)
 app.config.from_mapping(
     SECRET_KEY='dev',
-    DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
+    MONGO_URI=os.environ['MONGO_URI']
 )
 
-app.config["MONGO_URI"] = os.environ.get('MONGO_URI')
 mongo = PyMongo(app)
 
 # if test_config is None:

@@ -36,6 +36,8 @@ class Agent:
             ax.plot(xs, ys, linewidth=1)
             # --- debug counter
             debug_counter = 0
+        if DEBUG:
+            self.embedding(0)
 
         while True:
             # sleep for a simu time
