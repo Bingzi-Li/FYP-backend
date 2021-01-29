@@ -1,13 +1,13 @@
 from simulator import Env, Map, Agent
 from threading import Thread
-from simulator.constants import DEBUG
+from simulator.constants import DEBUG, SIMU_DAYS, NUM_AGENTS
 import concurrent.futures
 
 
 class MobileSimulation:
     def __init__(self, n):
         self.simu_map = Map.Map()
-        self.env = Env.Env(self.simu_map)
+        self.env = Env.Env(self.simu_map, simu_time=SIMU_DAYS*24)
         if DEBUG:
             Agent.Agent(self.env, 0)
         else:
@@ -20,4 +20,4 @@ class MobileSimulation:
 
 
 if __name__ == '__main__':
-    MobileSimulation(5)
+    MobileSimulation(NUM_AGENTS)

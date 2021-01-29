@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import math
 import time
-from .constants import SIMU_TIMESCALE, UPDATE_PERIOD, DEBUG, SERVER_URL
+from .constants import SIMU_TIMESCALE, UPDATE_PERIOD, DEBUG, SERVER_URL, SIMU_DAYS
 
 
 class Agent:
@@ -36,8 +36,6 @@ class Agent:
             ax.plot(xs, ys, linewidth=1)
             # --- debug counter
             debug_counter = 0
-        if DEBUG:
-            self.embedding(0)
 
         while True:
             # sleep for a simu time
@@ -55,7 +53,7 @@ class Agent:
                 plt.plot(self.location.x, self.location.y, 'ro')
                 # --- debug counter
                 debug_counter += 1
-                if debug_counter > 24:
+                if debug_counter > 24*SIMU_DAYS:
                     break
         if DEBUG:
             # --- plot the trajectory
@@ -86,20 +84,33 @@ class Agent:
         will_move = bool(random.randint(0, 1))
         print(f'Agent {self.identity} will move: {will_move}')
         if will_move:
+            # generate a new location
             radian = random.uniform(-1.58, 1.58)
             direction = (math.sin(radian), 1 - math.sin(radian)**2)
             dist = random.uniform(
                 self.min_speed, self.max_speed) * UPDATE_PERIOD
-            # calculate the new location, make sure it's  in SG map
             new_loc = Point(self.location.x + dist *
                             direction[0], self.location.y + dist * direction[1])
+
+            # if not in sg map, move the new location towards center of SG
             while not self.env.simu_map.polys.contains(new_loc):
-                radian = random.uniform(-1.58, 1.58)
-                direction = (math.sin(radian), 1 - math.sin(radian)**2)
-                dist = random.uniform(
+                if DEBUG:
+                    print('recalculate point')
+                border = self.env.simu_map.polys
+                long_min, lat_min, long_max, lat_max = border.bounds
+                center = Point((long_min + long_max)/2, (lat_min + lat_max)/2)
+
+                dist = math.sqrt((new_loc.x - center.x) **
+                                 2 + (new_loc.x - center.x) ** 2)
+
+                moving_dist = random.uniform(
                     self.min_speed, self.max_speed) * UPDATE_PERIOD
-                new_loc = Point(
-                    self.location.x + dist * direction[0], self.location.y + dist * direction[1])
+
+                new_x = new_loc.x + moving_dist / \
+                    dist * (center.x - new_loc.x)
+                new_y = new_loc.y + moving_dist / \
+                    dist * (center.y - new_loc.y)
+                new_loc = Point(new_x, new_y)
 
             self.location = new_loc
 
@@ -135,9 +146,9 @@ class Agent:
         sgt = SGT(alphabets=alphabets, flatten=True)
         vector = sgt.fit(data).to_json(orient='values')
         # TODO: send to the server
-        data = {'day': day, 'embedding': vector}
+        data = {'id': self.identity, 'day': day, 'embedding': vector}
         r = requests.post(
-            f'{SERVER_URL}/embedding?id={self.identity}', json=data)
+            f'{SERVER_URL}/embedding', json=data)
         print(r.text)
 
     def plot_station(self, plt):

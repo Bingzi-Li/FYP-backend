@@ -3,6 +3,7 @@ import os
 from flask import Flask, request
 #from flask_socketio import SocketIO
 from flask_pymongo import PyMongo
+import numpy as np
 
 
 # --------config-------- #
@@ -38,11 +39,31 @@ def fetch():
     return {'res': nodes}
 
 
-@app.route('/search', methods=['POST'])
+@app.route('/search', methods=['POST', 'GET'])
 def search():
-    # TODO: extract nodes from database
+
+    # parameter: date range, and entry to display
     params = request.json
-    results = None
+
+    # TODO: this is testing data, actually should get from frontend
+    print(os.getcwd())
+    patient_data = np.load('./test_data/converted.npy')
+
+    # compute the distance between patient data and each user in the database
+    embedding_collection = mongo.db.embeddings
+    user_ids = embedding_collection.distinct('id', filter={}, session={})
+    for each_user in user_ids:
+        docs = embedding_collection.find(
+            projection={'id': each_user}, sort=[('day', 1)])
+        for i, doc in enumerate(docs):
+            embedding = np.fromstring(doc['embedding'][1:-1], sep=',')
+            # compute each day similarity with patient data
+            dist = np.linalg.norm(patient_data[i] - embedding)
+            print(dist)
+
+    # results: an ordered list of people(NRIC) and their similarity with the patient
+    results = []
+
     return {'res': results}
 
 
@@ -60,11 +81,13 @@ def signout():
 
 @app.route('/embedding', methods=['POST'])
 def embedding():
-    id = request.args.get('id')
-    trajectory = request.json
+    data = request.json
+
     embedding_collection = mongo.db.embeddings
-    embedding_collection.insert({'id': id, 'data': trajectory})
-    return {'res': f'Embedding {id} saved to database!'}
+
+    embedding_collection.find_one_and_update(filter={'id': data['id'], 'day': data['day'] % 14}, update={
+                                             '$set': {'day': data['day'], 'embedding': data['embedding']}}, upsert=True)
+    return {'res': 'Embedding ' + str(data['id']) + str(data['day'])+'saved to database!'}
 
 
 # @socketio.on('my event')
