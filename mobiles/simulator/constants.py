@@ -14,7 +14,7 @@ NUM_AGENTS = 5
 NODE_DATA_LOC = './node_data/mrt_lrt_data.json'
 
 # code mode
-DEBUG = True
+DEBUG = False
 SIMU_DAYS = 15
 
 SERVER_URL = 'http://localhost:5000'

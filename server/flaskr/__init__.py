@@ -48,23 +48,24 @@ def search():
     # TODO: this is testing data, actually should get from frontend
     print(os.getcwd())
     patient_data = np.load('./test_data/converted.npy')
+    display_num = 50  # number of entries to return
 
     # compute the distance between patient data and each user in the database
     embedding_collection = mongo.db.embeddings
     user_ids = embedding_collection.distinct('id', filter={}, session={})
+    results = dict()
     for each_user in user_ids:
-        docs = embedding_collection.find(
-            projection={'id': each_user}, sort=[('day', 1)])
+        docs = embedding_collection.find({'id': each_user}, sort=[('day', 1)])
+        total_dist = 0
         for i, doc in enumerate(docs):
             embedding = np.fromstring(doc['embedding'][1:-1], sep=',')
             # compute each day similarity with patient data
             dist = np.linalg.norm(patient_data[i] - embedding)
-            print(dist)
+            total_dist += dist
+        results[each_user] = total_dist
 
     # results: an ordered list of people(NRIC) and their similarity with the patient
-    results = []
-
-    return {'res': results}
+    return {'res': sorted(results.items(), key=lambda item: item[1])}
 
 
 @app.route('/users/validate', methods=['POST'])

@@ -126,10 +126,10 @@ class Agent:
             if dist < self.env.record_range and dist < min_dist:
                 min_dist = dist
                 node_idx = node['id']
-        day = self.current_time // 24 % 14
+        day = self.current_time // 24
         hour = self.current_time % 24
         if node_idx:
-            self.trajectory[day, hour] = node_idx
+            self.trajectory[day % 14, hour] = node_idx
         # embed and send the data once a day to server
         if hour == 23:
             self.embedding(day)
