@@ -42,8 +42,11 @@ def fetch():
 @app.route('/search', methods=['POST', 'GET'])
 def search():
 
-    # parameter: date range, and entry to display
+    # parameter: date range, patients embedding, and entry to display
     params = request.json
+
+    # print the params sent by frontend
+    print(params)
 
     # TODO: this is testing data, actually should get from frontend
     print(os.getcwd())
