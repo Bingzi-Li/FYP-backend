@@ -39,19 +39,26 @@ def fetch():
     return {'res': nodes}
 
 
+@app.route('/upload', methods=['POST'])
+def upload():
+    uploaded_file = request.files['file']
+    patient_file = uploaded_file.filename
+    if uploaded_file.filename != '':
+        uploaded_file.save('patient.npy')
+    return {'res': 'patient trajectory uploaded.'}
+
+
 @app.route('/search', methods=['POST', 'GET'])
 def search():
 
     # parameter: date range, patients embedding, and entry to display
-    params = request.json
+    params = request.json['searchTerms']
 
-    # print the params sent by frontend
-    print(params)
+    # the params sent by frontend (str)
+    startDate, endDate, entryReturn = params['startDate'], params['endDate'], int(
+        params['entryToDisplay'])
 
-    # TODO: this is testing data, actually should get from frontend
-    print(os.getcwd())
-    patient_data = np.load('./test_data/converted.npy')
-    display_num = 50  # number of entries to return
+    patient_data = np.load('patient.npy')
 
     # compute the distance between patient data and each user in the database
     embedding_collection = mongo.db.embeddings
@@ -68,7 +75,7 @@ def search():
         results[each_user] = total_dist
 
     # results: an ordered list of people(NRIC) and their similarity with the patient
-    return {'res': sorted(results.items(), key=lambda item: item[1])}
+    return {'res': sorted(results.items(), key=lambda item: item[1], reverse=True)[:entryReturn]}
 
 
 @app.route('/users/validate', methods=['POST'])
