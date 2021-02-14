@@ -7,7 +7,8 @@ enviornment setup:
 1. server
    install flask
    ```cd server
-   export FLASK_APP=./flaskr/`__init__`.py
+   export FLASK_APP=flaskr
    export FLASK_ENV=development
+   export MONGO_URI=<your uri>
    flask run
    ```

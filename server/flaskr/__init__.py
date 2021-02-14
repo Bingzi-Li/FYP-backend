@@ -74,8 +74,8 @@ def search():
             total_dist += dist
         results[each_user] = total_dist
 
-    # results: an ordered list of people(NRIC) and their similarity with the patient
-    return {'res': sorted(results.items(), key=lambda item: item[1], reverse=True)[:entryReturn]}
+    # results: an ordered list of people(NRIC) and their distance with the patient
+    return {'res': sorted(results.items(), key=lambda item: item[1])[:entryReturn]}
 
 
 @app.route('/users/validate', methods=['POST'])
