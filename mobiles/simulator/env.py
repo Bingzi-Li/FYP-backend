@@ -12,7 +12,7 @@ class Env:
         '''
         self.min_speed = min_speed
         self.max_speed = max_speed
-        self.record_range = 2000
+        self.record_range = 3000
         self.simu_map = simu_map
         self.simu_time = simu_time  # unit: hour
         self.nodes = self.get_nodes()

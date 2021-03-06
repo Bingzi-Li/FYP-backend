@@ -3,7 +3,6 @@ import sgt
 from sgt import SGT
 import requests
 import numpy as np
-from sklearn.neighbors import NearestNeighbors
 from shapely.geometry import Point, Polygon
 import matplotlib.pyplot as plt
 import geopandas as gpd
@@ -62,6 +61,8 @@ class Agent:
                 plt.plot(node['point'].x, node['point'].y, 'b+')
             ax.set_title('Singapore Map')
             plt.show()
+            print(
+                f'Number of undefined locations: {np.count_nonzero(self.trajectory == -1)}')
         print(self.trajectory)
 
     def random_location(self):
@@ -104,7 +105,7 @@ class Agent:
                                  2 + (new_loc.x - center.x) ** 2)
 
                 moving_dist = random.uniform(
-                    self.min_speed, self.max_speed) * UPDATE_PERIOD
+                    self.max_speed/2, self.max_speed) * UPDATE_PERIOD
 
                 new_x = new_loc.x + moving_dist / \
                     dist * (center.x - new_loc.x)
@@ -120,7 +121,6 @@ class Agent:
         if there are several nodes in the range, update the trajectory to be the nearest one 
         '''
         min_dist, node_idx = float('inf'), -1
-        # print(self.env.nodes)
         for node in self.env.nodes:
             dist = node['point'].distance(self.location)
             if dist < self.env.record_range and dist < min_dist:
@@ -131,6 +131,8 @@ class Agent:
         if node_idx:
             self.trajectory[day % 14, hour] = node_idx
         # embed and send the data once a day to server
+        if DEBUG:
+            return
         if hour == 23:
             self.embedding(day)
 
@@ -145,7 +147,7 @@ class Agent:
         alphabets = range(-1, len(self.env.nodes))
         sgt = SGT(alphabets=alphabets, flatten=True)
         vector = sgt.fit(data).to_json(orient='values')
-        # TODO: send to the server
+        # send to the server
         data = {'id': self.identity, 'day': day, 'embedding': vector}
         r = requests.post(
             f'{SERVER_URL}/embedding', json=data)
