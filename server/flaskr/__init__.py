@@ -4,6 +4,7 @@ from flask import Flask, request
 #from flask_socketio import SocketIO
 from flask_pymongo import PyMongo
 import numpy as np
+from numpy.linalg import norm
 
 
 # --------config-------- #
@@ -66,16 +67,18 @@ def search():
     results = dict()
     for each_user in user_ids:
         docs = embedding_collection.find({'id': each_user}, sort=[('day', 1)])
-        total_dist = 0
+        total_sim = 0
         for i, doc in enumerate(docs):
             embedding = np.fromstring(doc['embedding'][1:-1], sep=',')
             # compute each day similarity with patient data
-            dist = np.linalg.norm(patient_data[i] - embedding)
-            total_dist += dist
-        results[each_user] = total_dist
+            cos_sim = np.inner(patient_data[i], embedding)/(norm(patient_data[i]) * norm(embedding))
+            print(cos_sim)
+            # dist = np.norm(patient_data[i] - embedding)
+            total_sim += cos_sim
+        results[each_user] = total_sim
 
-    # results: an ordered list of people(NRIC) and their distance with the patient
-    return {'res': sorted(results.items(), key=lambda item: item[1])[:entryReturn]}
+    # results: an ordered list of people(NRIC) and their similarity with the patient
+    return {'res': sorted(results.items(), key=lambda item: item[1], reverse=True)[:entryReturn]}
 
 
 @app.route('/users/validate', methods=['POST'])
