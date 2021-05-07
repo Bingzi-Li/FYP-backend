@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import geopandas as gpd
 import math
 import time
-from .constants import SIMU_TIMESCALE, UPDATE_PERIOD, DEBUG, SERVER_URL, SIMU_DAYS
+from .constants import SIMU_TIMESCALE, UPDATE_PERIOD, DEBUG, SERVER_URL, SIMU_DAYS, N_PER_DAY, TRACING_DAYS
 
 
 class Agent:
@@ -16,7 +16,7 @@ class Agent:
         self.identity = identity
         self.env = env
         # trajectory: 24 hours a day for 14 days. -1 means not close to any pre-defined locations
-        self.trajectory = np.full((14, 24), -1)
+        self.trajectory = np.full((TRACING_DAYS, N_PER_DAY), -1)
         # The current time: which hour
         self.current_time = current_time
         self.min_speed = env.min_speed
@@ -52,7 +52,7 @@ class Agent:
                 plt.plot(self.location.x, self.location.y, 'ro')
                 # --- debug counter
                 debug_counter += 1
-                if debug_counter > 24*SIMU_DAYS:
+                if debug_counter > N_PER_DAY*SIMU_DAYS:
                     break
         if DEBUG:
             # --- plot the trajectory
@@ -126,10 +126,10 @@ class Agent:
             if dist < self.env.record_range and dist < min_dist:
                 min_dist = dist
                 node_idx = node['id']
-        day = self.current_time // 24
-        hour = self.current_time % 24
+        day = self.current_time // N_PER_DAY
+        hour = self.current_time % N_PER_DAY
         if node_idx:
-            self.trajectory[day % 14, hour] = node_idx
+            self.trajectory[day % TRACING_DAYS, hour] = node_idx
         # embed and send the data once a day to server
         if DEBUG:
             return

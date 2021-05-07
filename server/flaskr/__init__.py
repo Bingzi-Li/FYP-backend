@@ -1,7 +1,6 @@
 import os
 
 from flask import Flask, request
-#from flask_socketio import SocketIO
 from flask_pymongo import PyMongo
 import numpy as np
 from numpy.linalg import norm
@@ -16,26 +15,10 @@ app.config.from_mapping(
 
 mongo = PyMongo(app)
 
-# if test_config is None:
-#     # load the instance config, if it exists, when not testing
-#     app.config.from_pyfile('config.py', silent=True)
-# else:
-#     # load the test config if passed in
-#     app.config.from_mapping(test_config)
-
-# # ensure the instance folder exists
-# try:
-#     os.makedirs(app.instance_path)
-# except OSError:
-#     pass
-# socketio = SocketIO(app)
-
-# a simple page that says hello
-
 
 @app.route('/nodes/all', methods=['GET'])
 def fetch():
-    # TODO: extract nodes from database
+    # if needs to extract nodes from database
     nodes = {}
     return {'res': nodes}
 
@@ -71,7 +54,8 @@ def search():
         for i, doc in enumerate(docs):
             embedding = np.fromstring(doc['embedding'][1:-1], sep=',')
             # compute each day similarity with patient data
-            cos_sim = np.inner(patient_data[i], embedding)/(norm(patient_data[i]) * norm(embedding))
+            cos_sim = np.inner(
+                patient_data[i], embedding)/(norm(patient_data[i]) * norm(embedding))
             print(cos_sim)
             # dist = np.norm(patient_data[i] - embedding)
             total_sim += cos_sim
@@ -102,13 +86,3 @@ def embedding():
     embedding_collection.find_one_and_update(filter={'id': data['id'], 'day': data['day'] % 14}, update={
                                              '$set': {'day': data['day'], 'embedding': data['embedding']}}, upsert=True)
     return {'res': 'Embedding ' + str(data['id']) + str(data['day'])+'saved to database!'}
-
-
-# @socketio.on('my event')
-# def handle_my_custom_event(json, methods=['GET', 'POST']):
-#     print('received my event: ' + str(json))
-#     socketio.emit('my response', json, callback=messageReceived)
-
-
-# if __name__ == '__main__':
-#     socketio.run(app, debug=True)
