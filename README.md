@@ -1,6 +1,4 @@
-# FYP-mobile
-
-mobile simulation of FYP
+# Mobile simulation & server
 
 enviornment setup:
 
